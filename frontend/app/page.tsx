@@ -9,12 +9,10 @@ interface Message {
 }
 
 export default function ChatPage() {
-  // Estados para el chat
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  // Estados para la subida de archivos
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
@@ -50,9 +48,13 @@ export default function ChatPage() {
         throw new Error(data.detail || "Error al subir el archivo.");
       }
       setUploadMessage(`✅ Archivo ${file.name} subido con éxito!`);
-    } catch (error: any) {
-      setUploadMessage(`❌ Error: ${error.message}`);
-    } finally {
+    } catch (error) { // <-- INICIO DE LA CORRECCIÓN 1
+      if (error instanceof Error) {
+        setUploadMessage(`❌ Error: ${error.message}`);
+      } else {
+        setUploadMessage(`❌ Ocurrió un error desconocido.`);
+      }
+    } finally { // <-- FIN DE LA CORRECCIÓN 1
       setIsUploading(false);
       setFile(null);
     }
@@ -85,18 +87,22 @@ export default function ChatPage() {
       const agentMessage: Message = { text: data.answer, isUser: false };
       setMessages((prev) => [...prev, agentMessage]);
 
-    } catch (error) {
+    } catch (error) { // <-- INICIO DE LA CORRECCIÓN 2
       console.error("Failed to fetch agent response:", error);
-      const errorMessage: Message = { text: "Lo siento, hubo un error al conectar con el agente.", isUser: false };
+      let errorMessageText = "Lo siento, hubo un error al conectar con el agente.";
+      if (error instanceof Error) {
+        errorMessageText = `Error: ${error.message}`;
+      }
+      const errorMessage: Message = { text: errorMessageText, isUser: false };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
+    } finally { // <-- FIN DE LA CORRECCIÓN 2
       setIsLoading(false);
     }
   };
 
+  // ... (el resto del código JSX no cambia)
   return (
     <div style={{ fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto', padding: '20px', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '40px' }}>
-      {/* Columna de la Izquierda: Subida de Archivos */}
       <div>
         <h2>Base de Conocimiento Privada</h2>
         <form onSubmit={handleUpload}>
@@ -108,18 +114,15 @@ export default function ChatPage() {
           {uploadMessage && <p style={{ marginTop: '10px' }}>{uploadMessage}</p>}
         </form>
       </div>
-
-      {/* Columna de la Derecha: Chat */}
       <div>
         <h1>Agente de Cumplimiento IES</h1>
-        {/* --- INICIO DEL CÓDIGO RESTAURADO --- */}
         <div style={{ height: '600px', border: '1px solid #ccc', borderRadius: '8px', padding: '10px', overflowY: 'auto', marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
           {messages.map((msg, index) => (
             <div key={index} style={{ alignSelf: msg.isUser ? 'flex-end' : 'flex-start', background: msg.isUser ? '#dcf8c6' : '#f1f0f0', borderRadius: '10px', padding: '8px 12px', margin: '5px', maxWidth: '70%' }}>
               <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{msg.text}</p>
             </div>
           ))}
-          {isLoading && <div style={{ alignSelf: 'flex-start', fontStyle: 'italic', color: '#888' }}>El agente está pensando...</div>}
+         {isLoading && <div style={{ alignSelf: 'flex-start', fontStyle: 'italic', color: '#888' }}>El agente está pensando...</div>}
         </div>
         <form onSubmit={handleQuerySubmit} style={{ display: 'flex' }}>
           <input
@@ -133,7 +136,6 @@ export default function ChatPage() {
             Enviar
           </button>
         </form>
-        {/* --- FIN DEL CÓDIGO RESTAURADO --- */}
       </div>
     </div>
   );
