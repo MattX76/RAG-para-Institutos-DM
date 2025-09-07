@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # Aplicación
     ES_INDEX_NAME: str = "ies_normativa_multi_tenant"
     GLOBAL_TENANT_ID: str = "dueño_del_servicio_global" # <-- AÑADE ESTA LÍNEA
-
+    FRONTEND_URL: str
 settings = Settings()
 print(f"--- URI LEÍDA POR LA APP: {settings.POSTGRES_URI} ---")
 
