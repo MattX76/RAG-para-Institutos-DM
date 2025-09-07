@@ -30,10 +30,11 @@ app = FastAPI(title="IES Compliance Agent API con LangGraph")
 # 2. Configura el middleware de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","https://rag-para-institutos-dm.vercel.app"],  # El origen de tu app Next.js en desarrollo
+    allow_origins=["http://localhost:3000",settings.FRONTEND_URL],  # El origen de tu app Next.js en desarrollo
     allow_credentials=True,
     allow_methods=["*"], # Permite todos los métodos (GET, POST, etc.)
     allow_headers=["*"], # Permite todas las cabeceras
+    
 )
 # Paso 1: Crear un pool de conexiones SÍNCRONO, como en tu app original
 db_pool = ConnectionPool(conninfo=settings.POSTGRES_URI)
