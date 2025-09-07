@@ -17,7 +17,12 @@ export default function ChatPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   
-  const TENANT_ID = "cliente_universidad_xyz"; 
+  const TENANT_ID = "cliente_universidad_xyz";
+  
+  // --- INICIO DE LA CORRECCIÓN ---
+  // Usamos la variable de entorno para la URL de la API
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  // --- FIN DE LA CORRECCIÓN ---
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -27,10 +32,7 @@ export default function ChatPage() {
 
   const handleUpload = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setUploadMessage("Por favor, selecciona un archivo.");
-      return;
-    }
+    if (!file || !API_BASE_URL) return;
     setIsUploading(true);
     setUploadMessage(`Subiendo ${file.name}...`);
 
@@ -39,7 +41,8 @@ export default function ChatPage() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/upload", {
+      // Usamos la variable para construir la URL del endpoint
+      const response = await fetch(`${API_BASE_URL}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -48,13 +51,13 @@ export default function ChatPage() {
         throw new Error(data.detail || "Error al subir el archivo.");
       }
       setUploadMessage(`✅ Archivo ${file.name} subido con éxito!`);
-    } catch (error) { // <-- INICIO DE LA CORRECCIÓN 1
+    } catch (error) {
       if (error instanceof Error) {
         setUploadMessage(`❌ Error: ${error.message}`);
       } else {
         setUploadMessage(`❌ Ocurrió un error desconocido.`);
       }
-    } finally { // <-- FIN DE LA CORRECCIÓN 1
+    } finally {
       setIsUploading(false);
       setFile(null);
     }
@@ -62,7 +65,7 @@ export default function ChatPage() {
 
   const handleQuerySubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !API_BASE_URL) return;
 
     const userMessage: Message = { text: input, isUser: true };
     setMessages((prev) => [...prev, userMessage]);
@@ -70,7 +73,8 @@ export default function ChatPage() {
     setInput("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/query", {
+      // Usamos la variable para construir la URL del endpoint
+      const response = await fetch(`${API_BASE_URL}/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,7 +91,7 @@ export default function ChatPage() {
       const agentMessage: Message = { text: data.answer, isUser: false };
       setMessages((prev) => [...prev, agentMessage]);
 
-    } catch (error) { // <-- INICIO DE LA CORRECCIÓN 2
+    } catch (error) {
       console.error("Failed to fetch agent response:", error);
       let errorMessageText = "Lo siento, hubo un error al conectar con el agente.";
       if (error instanceof Error) {
@@ -95,7 +99,7 @@ export default function ChatPage() {
       }
       const errorMessage: Message = { text: errorMessageText, isUser: false };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally { // <-- FIN DE LA CORRECCIÓN 2
+    } finally {
       setIsLoading(false);
     }
   };
